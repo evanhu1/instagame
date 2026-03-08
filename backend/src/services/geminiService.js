@@ -45,6 +45,10 @@ const getGeminiMusicClient = () => {
 const storyResponseSchema = {
   type: Type.OBJECT,
   properties: {
+    title: {
+      type: Type.STRING,
+      description: 'A short, cinematic title for the story.',
+    },
     story_background: {
       type: Type.STRING,
       description: 'The overarching premise and world setup for the story.',
@@ -79,6 +83,7 @@ const storyResponseSchema = {
     },
   },
   required: [
+    'title',
     'story_background',
     'initial_character',
     'initial_turn',
@@ -126,6 +131,23 @@ const parseStructuredTurn = (rawResponseText, contextLabel) => {
   };
 };
 
+const normalizeStorySeed = (storySeed) => {
+  const title = typeof storySeed?.title === 'string' ? storySeed.title.trim() : '';
+
+  if (!title) {
+    throw new Error('Gemini story seed generation returned an empty title.');
+  }
+
+  return {
+    ...storySeed,
+    title,
+    story_background:
+      typeof storySeed?.story_background === 'string'
+        ? storySeed.story_background.trim()
+        : '',
+  };
+};
+
 export const generateStorySeedFromPhoto = async ({ imageBuffer, mimeType }) => {
   const client = getGeminiClient();
   const base64Image = imageBuffer.toString('base64');
@@ -137,6 +159,7 @@ Analyze the uploaded photo and use it as visual inspiration for the first chapte
 Return JSON only.
 
 Requirements:
+- Create a concise title, ideally 2 to 5 words.
 - Make the setting cinematic, grounded, and immediately playable.
 - Produce exactly one initial character.
 - The first turn should be dialogue or narration that naturally opens the story.
@@ -159,7 +182,7 @@ Requirements:
     throw new Error('Gemini text generation did not return a JSON payload.');
   }
 
-  const storySeed = JSON.parse(response.text);
+  const storySeed = normalizeStorySeed(JSON.parse(response.text));
 
   storySeed.initial_turn = parseStructuredTurn(
     JSON.stringify(storySeed.initial_turn),
@@ -341,24 +364,6 @@ const extractFirstMimeParameter = (mimeType, parameterNames) => {
   return undefined;
 };
 
-const swap16BitByteOrder = (buffer) => {
-  if (buffer.length % 2 !== 0) {
-    throw new Error(
-      'Gemini music generation returned an odd number of bytes for 16-bit PCM audio.',
-    );
-  }
-
-  const swapped = Buffer.from(buffer);
-
-  for (let offset = 0; offset < swapped.length; offset += 2) {
-    const firstByte = swapped[offset];
-    swapped[offset] = swapped[offset + 1];
-    swapped[offset + 1] = firstByte;
-  }
-
-  return swapped;
-};
-
 const normalizeAudioOutput = ({ chunks, mimeType }) => {
   const pcmBuffer = Buffer.concat(chunks);
   const normalizedMimeType = mimeType.split(';', 1)[0].trim().toLowerCase();
@@ -367,14 +372,12 @@ const normalizeAudioOutput = ({ chunks, mimeType }) => {
     normalizedMimeType === 'audio/pcm' ||
     normalizedMimeType === 'audio/l16'
   ) {
-    const normalizedPcmBuffer =
-      normalizedMimeType === 'audio/l16'
-        ? swap16BitByteOrder(pcmBuffer)
-        : pcmBuffer;
-
     return {
       buffer: pcmToWav({
-        pcmBuffer: normalizedPcmBuffer,
+        // The Lyria JS docs write the received pcm16 chunks directly to the
+        // audio sink without endian conversion. Swapping here turns the output
+        // into static, so preserve the chunk byte order as-is.
+        pcmBuffer,
         sampleRate: extractMimeParameter(mimeType, 'rate') ?? 48000,
         channelCount:
           extractFirstMimeParameter(mimeType, ['channels', 'channel-count']) ??

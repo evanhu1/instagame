@@ -47,6 +47,7 @@ export const turnSchema = z.object({
 
 export const storySchema = z.object({
   id: z.number().int().positive(),
+  title: z.string().min(1),
   story_background: z.string().min(1),
   current_turn_id: z.number().int().positive().nullable(),
   current_scene_id: z.number().int().positive().nullable(),

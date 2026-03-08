@@ -23,6 +23,7 @@ const normalizeTurn = (turn) => ({
 });
 
 export const createStoryGraph = async ({
+  title,
   storyBackground,
   sourceImageUrl,
   initialCharacter,
@@ -33,11 +34,11 @@ export const createStoryGraph = async ({
     const storyResult = db
       .prepare(
         `
-          INSERT INTO stories (story_background, current_turn_id, current_scene_id, source_image_url)
-          VALUES (?, NULL, NULL, ?)
+          INSERT INTO stories (title, story_background, current_turn_id, current_scene_id, source_image_url)
+          VALUES (?, ?, NULL, NULL, ?)
         `,
       )
-      .run(storyBackground, sourceImageUrl ?? null);
+      .run(title, storyBackground, sourceImageUrl ?? null);
 
     const storyId = Number(storyResult.lastInsertRowid);
 

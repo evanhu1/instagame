@@ -3,6 +3,7 @@ export const schemaStatements = [
   `
     CREATE TABLE IF NOT EXISTS stories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
       story_background TEXT NOT NULL,
       current_turn_id INTEGER,
       current_scene_id INTEGER,

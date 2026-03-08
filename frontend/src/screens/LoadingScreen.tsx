@@ -2,18 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Music } from 'lucide-react';
 import { useGame } from '@/context/GameContext';
-import { MOCK_STORY } from '@/data/mockStory';
-
-const LOADING_STAGES = [
-  { text: 'Scanning surroundings...', delay: 0 },
-  { text: 'A story is forming...', delay: 2000 },
-  { text: null, delay: 4000, showTitle: true },
-  { text: null, delay: 5500, showSubtitle: true },
-  { text: null, delay: 7000, showTap: true },
-];
+import { buildStoryTitle } from '@/lib/story';
 
 export function LoadingScreen() {
-  const { state, dispatch } = useGame();
+  const { state, dispatch, generateStory } = useGame();
   const [currentStage, setCurrentStage] = useState(0);
   const [showMusicIndicator, setShowMusicIndicator] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
@@ -22,28 +14,73 @@ export function LoadingScreen() {
     const timer = setTimeout(() => {
       setShowMusicIndicator(true);
     }, 3000);
+
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    const timers = LOADING_STAGES.map((stage, index) =>
-      setTimeout(() => setCurrentStage(index), stage.delay)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, []);
+    if (state.storyStatus === 'idle' && state.pendingImageFile) {
+      void generateStory();
+    }
+  }, [state.storyStatus, state.pendingImageFile, generateStory]);
+
+  useEffect(() => {
+    if (state.storyStatus !== 'generating') {
+      return;
+    }
+
+    setCurrentStage(0);
+
+    const timer = setTimeout(() => {
+      setCurrentStage(1);
+    }, 1800);
+
+    return () => clearTimeout(timer);
+  }, [state.storyStatus]);
+
+  useEffect(() => {
+    if (state.storyStatus !== 'ready' || !state.story) {
+      return;
+    }
+
+    setCurrentStage(2);
+
+    const subtitleTimer = setTimeout(() => {
+      setCurrentStage(3);
+    }, 600);
+
+    const tapTimer = setTimeout(() => {
+      setCurrentStage(4);
+    }, 1400);
+
+    return () => {
+      clearTimeout(subtitleTimer);
+      clearTimeout(tapTimer);
+    };
+  }, [state.storyStatus, state.story]);
 
   const handleTapToBegin = useCallback(() => {
+    if (state.storyStatus !== 'ready' || !state.story) {
+      return;
+    }
+
     setIsFadingOut(true);
     setTimeout(() => {
       dispatch({ type: 'SET_SCREEN', payload: 'story' });
     }, 500);
+  }, [dispatch, state.storyStatus, state.story]);
+
+  const handleRetry = useCallback(() => {
+    setCurrentStage(0);
+    void generateStory();
+  }, [generateStory]);
+
+  const handleBack = useCallback(() => {
+    dispatch({ type: 'SET_SCREEN', payload: 'camera' });
   }, [dispatch]);
 
-  const currentStageData = LOADING_STAGES[currentStage];
-
   return (
-    <div className="relative w-full h-full bg-black overflow-hidden">
-      {/* Full-screen photo with Ken Burns effect */}
+    <div className="relative h-full w-full overflow-hidden bg-black">
       <motion.div
         initial={{ scale: 1 }}
         animate={{ scale: 1.15 }}
@@ -54,38 +91,34 @@ export function LoadingScreen() {
           <motion.img
             src={state.uploadedPhoto}
             alt="Uploaded"
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover"
             initial={{ filter: 'saturate(0.6) contrast(1.1) brightness(0.35)' }}
             animate={{ filter: 'saturate(0.8) contrast(1.15) brightness(0.3)' }}
             transition={{ duration: 5, ease: 'easeOut' }}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
+          <div className="h-full w-full bg-gradient-to-br from-gray-800 to-gray-900" />
         )}
       </motion.div>
 
-      {/* Full dark overlay for text readability */}
       <div className="absolute inset-0 bg-black/50" />
-
-      {/* Bottom gradient — extra dark at bottom for title/premise area */}
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 80%)',
+          background:
+            'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 80%)',
         }}
       />
-
-      {/* Vignette */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.5) 100%)',
+          background:
+            'radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.5) 100%)',
         }}
       />
 
-      {/* Music indicator */}
       <AnimatePresence>
-        {showMusicIndicator && (
+        {showMusicIndicator ? (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -101,82 +134,106 @@ export function LoadingScreen() {
                 repeat: Infinity,
                 ease: 'easeInOut',
               }}
-              className="flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-2.5 py-1"
+              className="flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 backdrop-blur-sm"
             >
-              <Music className="w-2.5 h-2.5 text-white/60" />
-              <span className="text-white/40 text-[9px]">Music</span>
+              <Music className="h-2.5 w-2.5 text-white/60" />
+              <span className="text-[9px] text-white/40">Music</span>
             </motion.div>
           </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
 
-      {/* Loading text content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-5">
-        {/* Stage text (scanning, forming) */}
-        <AnimatePresence mode="wait">
-          {currentStageData?.text && (
-            <motion.p
-              key={currentStage}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="text-white/90 text-sm font-light tracking-wide"
-            >
-              {currentStageData.text.split('').map((char, index) => (
-                <motion.span
-                  key={index}
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-5">
+        {state.storyStatus === 'error' ? (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-[240px] text-center"
+          >
+            <p className="text-sm text-white/92">The story failed to generate.</p>
+            <p className="mt-2 text-[11px] leading-relaxed text-white/60">
+              {state.errorMessage || 'The backend returned an error.'}
+            </p>
+            <div className="mt-4 flex justify-center gap-2">
+              <button
+                onClick={handleRetry}
+                className="rounded-full bg-amber-400 px-4 py-2 text-[11px] font-semibold text-black"
+              >
+                Retry
+              </button>
+              <button
+                onClick={handleBack}
+                className="rounded-full border border-white/20 px-4 py-2 text-[11px] text-white/75"
+              >
+                Back
+              </button>
+            </div>
+          </motion.div>
+        ) : (
+          <>
+            <AnimatePresence mode="wait">
+              {currentStage < 2 ? (
+                <motion.p
+                  key={currentStage}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.04 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-sm font-light tracking-wide text-white/90"
                 >
-                  {char}
-                </motion.span>
-              ))}
-            </motion.p>
-          )}
-        </AnimatePresence>
+                  {(currentStage === 0 ? 'Scanning surroundings...' : 'A story is forming...')
+                    .split('')
+                    .map((char, index) => (
+                      <motion.span
+                        key={`${char}-${index}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.04 }}
+                      >
+                        {char}
+                      </motion.span>
+                    ))}
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
 
-        {/* Story title */}
-        <AnimatePresence>
-          {currentStageData?.showTitle && (
-            <motion.h1
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="text-white text-xl font-serif text-center mt-3"
-              style={{
-                textShadow: '0 0 30px rgba(255,255,255,0.2)',
-              }}
-            >
-              {MOCK_STORY.title}
-            </motion.h1>
-          )}
-        </AnimatePresence>
+            <AnimatePresence>
+              {currentStage >= 2 && state.story ? (
+                <motion.h1
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                  className="mt-3 text-center font-serif text-xl text-white"
+                  style={{
+                    textShadow: '0 0 30px rgba(255,255,255,0.2)',
+                  }}
+                >
+                  {buildStoryTitle(state.story, state.userPrompt)}
+                </motion.h1>
+              ) : null}
+            </AnimatePresence>
 
-        {/* Subtitle */}
-        <AnimatePresence>
-          {currentStageData?.showSubtitle && (
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
-              className="text-white/85 text-[11px] text-center mt-3 max-w-[220px] leading-relaxed"
-            >
-              {MOCK_STORY.premise}
-            </motion.p>
-          )}
-        </AnimatePresence>
+            <AnimatePresence>
+              {currentStage >= 3 && state.story ? (
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
+                  className="mt-3 max-w-[220px] text-center text-[11px] leading-relaxed text-white/85"
+                >
+                  {state.story.story_background || 'A cinematic opening generated from your photo.'}
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
+          </>
+        )}
       </div>
 
-      {/* Tap to begin */}
       <AnimatePresence>
-        {currentStageData?.showTap && (
+        {currentStage >= 4 && state.storyStatus === 'ready' ? (
           <motion.button
             initial={{ opacity: 0 }}
-            animate={{
-              opacity: [0.4, 0.9, 0.4],
-            }}
+            animate={{ opacity: [0.4, 0.9, 0.4] }}
             transition={{
               opacity: {
                 duration: 2,
@@ -185,25 +242,24 @@ export function LoadingScreen() {
               },
             }}
             onClick={handleTapToBegin}
-            className="absolute bottom-12 left-0 right-0 z-20 text-center"
+            className="absolute right-0 bottom-12 left-0 z-20 text-center"
           >
-            <span className="text-white/90 text-[11px] tracking-widest uppercase">
+            <span className="text-[11px] uppercase tracking-widest text-white/90">
               Tap to begin
             </span>
           </motion.button>
-        )}
+        ) : null}
       </AnimatePresence>
 
-      {/* Fade to black overlay */}
       <AnimatePresence>
-        {isFadingOut && (
+        {isFadingOut ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
             className="absolute inset-0 z-50 bg-black"
           />
-        )}
+        ) : null}
       </AnimatePresence>
     </div>
   );

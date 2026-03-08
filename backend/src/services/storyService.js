@@ -37,6 +37,7 @@ export const generateStoryFromUpload = async ({ buffer, mimeType }) => {
     });
 
     const created = await createStoryGraph({
+      title: storySeed.title,
       storyBackground: storySeed.story_background,
       sourceImageUrl,
       initialCharacter: storySeed.initial_character,

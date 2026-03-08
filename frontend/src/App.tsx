@@ -63,25 +63,25 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const { state, dispatch } = useGame();
 
-  // If in gameplay mode (story, loading, summary), show game content
   const isInGameplay = ['story', 'loading', 'summary'].includes(state.currentScreen);
 
-  // Handle back button during gameplay
   const handleBack = () => {
+    if (state.currentScreen === 'story' && state.story) {
+      dispatch({ type: 'SET_SCREEN', payload: 'summary' });
+      return;
+    }
+
     if (isInGameplay) {
       dispatch({ type: 'SET_SCREEN', payload: 'camera' });
       dispatch({ type: 'SET_TAB', payload: 'home' });
     }
   };
 
-  // Render content based on current state
   const renderContent = () => {
-    // Gameplay screens take priority
     if (state.currentScreen === 'loading') return <LoadingScreen />;
     if (state.currentScreen === 'story') return <StoryScreen onBack={handleBack} />;
     if (state.currentScreen === 'summary') return <SummaryScreen />;
 
-    // Tab-based screens
     if (state.currentTab === 'home') {
       return <CameraScreen />;
     }

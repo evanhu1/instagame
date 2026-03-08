@@ -6,6 +6,25 @@ import { schemaStatements } from './schema.js';
 
 let db;
 
+const ensureStoriesTitleColumn = (database) => {
+  const storyColumns = database
+    .prepare(`PRAGMA table_info(stories)`)
+    .all();
+  const hasTitleColumn = storyColumns.some((column) => column.name === 'title');
+
+  if (!hasTitleColumn) {
+    database.exec(
+      `ALTER TABLE stories ADD COLUMN title TEXT NOT NULL DEFAULT 'Untitled Story'`,
+    );
+  }
+
+  database.exec(`
+    UPDATE stories
+    SET title = 'Story ' || id
+    WHERE title IS NULL OR TRIM(title) = ''
+  `);
+};
+
 const ensureTurnsTypeColumn = (database) => {
   const turnColumns = database
     .prepare(`PRAGMA table_info(turns)`)
@@ -38,6 +57,7 @@ export const initializeDatabase = async () => {
     db.exec(statement);
   }
 
+  ensureStoriesTitleColumn(db);
   ensureTurnsTypeColumn(db);
 };
 

@@ -12,6 +12,26 @@ export const trpcClient = createTRPCClient({
   ],
 });
 
+export const generateStoryFromImage = async (file) => {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await fetch(`${API_BASE_URL}/stories/generate`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      payload?.error || payload?.message || 'Failed to upload image to the backend.',
+    );
+  }
+
+  return payload;
+};
+
 export const resolveAssetUrl = (assetUrl) => {
   if (!assetUrl) {
     return null;

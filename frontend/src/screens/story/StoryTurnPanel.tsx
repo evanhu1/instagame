@@ -317,6 +317,7 @@ export function StoryTurnPanel({
 
       <div
         className="flex min-h-[132px] flex-col justify-start"
+        onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => event.stopPropagation()}
       >
         <AnimatePresence>

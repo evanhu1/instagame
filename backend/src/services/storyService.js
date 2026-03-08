@@ -14,6 +14,11 @@ import {
   drawCharacterForCharacter,
   generateBackgroundMusicForScene,
 } from './mediaGenerationService.js';
+import {
+  findRelevantPreviousTurn,
+  formatTurnAsRelevantContext,
+  upsertStoryTurns,
+} from './turnMemoryService.js';
 import { persistSourceUpload } from '../utils/fileStorage.js';
 import { HttpError } from '../utils/httpError.js';
 
@@ -128,6 +133,14 @@ export const advanceStoryTurn = async ({ storyId, turnText }) => {
     );
   }
 
+  await upsertStoryTurns(context.previousTurns);
+
+  const relevantTurn = await findRelevantPreviousTurn({
+    storyId,
+    queryText: turnText,
+    excludeTurnId: context.currentTurn.id,
+  });
+
   const generatedTurn = await generateNextTurn({
     storyBackground: context.story.story_background,
     currentSceneDescription: context.currentScene.description,
@@ -145,9 +158,10 @@ export const advanceStoryTurn = async ({ storyId, turnText }) => {
       text: turn.text,
     })),
     selectedTextChoice: turnText,
+    relevantContext: formatTurnAsRelevantContext(relevantTurn),
   });
 
-  await createGeneratedTurn({
+  const createdTurn = await createGeneratedTurn({
     storyId,
     sceneId: context.currentScene.id,
     previousTurnId: context.currentTurn.id,
@@ -156,6 +170,8 @@ export const advanceStoryTurn = async ({ storyId, turnText }) => {
     speakerCharacterId:
       generatedTurn.type === 'dialogue' ? context.currentCharacter.id : null,
   });
+
+  await upsertStoryTurns([createdTurn]);
 
   return getStoryOrThrow(storyId);
 };

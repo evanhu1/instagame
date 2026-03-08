@@ -16,6 +16,7 @@ import { StoryBackdrop } from './story/StoryBackdrop';
 import { StoryHeader } from './story/StoryHeader';
 import { StoryTurnPanel } from './story/StoryTurnPanel';
 import { useStoryBackgroundMusic } from './story/useStoryBackgroundMusic';
+import { useStoryDialogueVoice } from './story/useStoryDialogueVoice';
 
 interface StoryScreenProps {
   onBack?: () => void;
@@ -50,6 +51,18 @@ export function StoryScreen({ onBack }: StoryScreenProps) {
   const { autoplayBlocked, isMusicAvailable } = useStoryBackgroundMusic({
     backgroundMusicUrl,
     musicEnabled: state.musicEnabled,
+  });
+
+  useStoryDialogueVoice({
+    turnKey,
+    text: currentTurn?.text || '',
+    speakerName: speakingCharacter?.name || currentTurn?.speaker_name || null,
+    characterId: speakingCharacter?.id || currentTurn?.speaker_character_id || null,
+    enabled: Boolean(
+      currentTurn &&
+        currentTurn.type === 'dialogue' &&
+        (speakingCharacter?.id || currentTurn.speaker_character_id),
+    ),
   });
 
   if (!currentStory || !currentTurn) {

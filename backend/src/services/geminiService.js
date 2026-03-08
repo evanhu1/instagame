@@ -198,6 +198,7 @@ export const generateNextTurn = async ({
   currentCharacter,
   previousTurns,
   selectedTextChoice,
+  relevantContext,
 }) => {
   const client = getGeminiClient();
   const prompt = `
@@ -226,6 +227,9 @@ ${JSON.stringify(previousTurns, null, 2)}
 
 Selected text choice:
 ${selectedTextChoice}
+
+relevant context:
+${relevantContext ?? 'none'}
   `.trim();
 
   const response = await client.models.generateContent({

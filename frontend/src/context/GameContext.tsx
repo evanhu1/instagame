@@ -8,7 +8,7 @@ import {
   useRef,
 } from 'react';
 import type { ReactNode } from 'react';
-import { trpcClient } from '@/api/trpcClient';
+import { generateStoryFromImage, trpcClient } from '@/api/trpcClient';
 import {
   buildStoryTitle,
   getCurrentScene,
@@ -283,10 +283,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     const request = (async () => {
       try {
-        const formData = new FormData();
-        formData.append('image', pendingImageFile);
-
-        const result = await trpcClient.story.generate.mutate(formData);
+        const result = await generateStoryFromImage(pendingImageFile);
 
         dispatch({
           type: 'GENERATE_SUCCESS',

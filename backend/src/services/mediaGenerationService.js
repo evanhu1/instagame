@@ -105,6 +105,10 @@ export const generateBackgroundMusicForScene = async ({
   sceneId,
   description,
 }) => {
+  if (!config.gemini.musicEnabled) {
+    throw new Error('Gemini background music generation is disabled.');
+  }
+
   const scene = await getSceneById(sceneId);
 
   if (!scene) {

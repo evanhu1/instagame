@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import { createApp } from './app.js';
 import { config } from './config.js';
 import { initializeDatabase } from './db/index.js';
+import { initializeTurnMemory } from './services/turnMemoryService.js';
 
 const ensureStorageDirectories = async () => {
   await Promise.all([
@@ -16,6 +17,7 @@ const ensureStorageDirectories = async () => {
 const startServer = async () => {
   await ensureStorageDirectories();
   await initializeDatabase();
+  await initializeTurnMemory();
 
   const app = createApp();
   app.listen(config.port, () => {

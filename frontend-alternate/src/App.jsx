@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { resolveAssetUrl, trpcClient } from './api/trpcClient';
+import {
+  generateStoryFromImage,
+  resolveAssetUrl,
+  trpcClient,
+} from './api/trpcClient';
 
 const buildActionLabels = (speaker, scene) => {
   const name = speaker?.name?.split(' ')[0] || 'them';
@@ -58,12 +62,7 @@ function App() {
   });
 
   const generateStoryMutation = useMutation({
-    mutationFn: async (imageFile) => {
-      const formData = new FormData();
-      formData.append('image', imageFile);
-
-      return trpcClient.story.generate.mutate(formData);
-    },
+    mutationFn: async (imageFile) => generateStoryFromImage(imageFile),
     onMutate: () => {
       setStoryId(null);
       setActiveAction('');

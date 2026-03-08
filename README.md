@@ -1,6 +1,6 @@
 # Overworld
 
-The world is the largest open-world game ever made. Press start. 
+The world is the largest open-world game ever made. Overworld is a generative game engine that turns the world around you into a playable adventure. Turn a any photo you take of the world around you into a playable adventure. Characters. Storyline. Choices. Visuals. Music. All generated. All unique to where you are.
 
 ## AI Services
 

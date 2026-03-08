@@ -24,7 +24,7 @@ export const config = {
     imageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
     imageMaxAttempts: Number(process.env.GEMINI_IMAGE_MAX_ATTEMPTS || 3),
     musicModel: process.env.GEMINI_MUSIC_MODEL || 'models/lyria-realtime-exp',
-    musicGenerationMs: Number(process.env.GEMINI_MUSIC_GENERATION_MS || 10000),
+    musicGenerationMs: Number(process.env.GEMINI_MUSIC_GENERATION_MS || 30000),
   },
   defaults: {
     characterImageUrl:

@@ -28,7 +28,7 @@ const MUSIC_ENABLED_STORAGE_KEY = 'instagame.musicEnabled';
 const initialState: GameState = {
   currentScreen: 'camera',
   currentTab: 'home',
-  musicEnabled: false,
+  musicEnabled: true,
   uploadedPhoto: null,
   pendingImageFile: null,
   userPrompt: '',

@@ -10,6 +10,7 @@ import {
   getTurnKey,
   trimCopy,
 } from '@/lib/story';
+import type { Choice } from '@/types/game';
 import { SceneTransition } from './story/SceneTransition';
 import { StoryBackdrop } from './story/StoryBackdrop';
 import { StoryHeader } from './story/StoryHeader';
@@ -22,6 +23,16 @@ interface StoryScreenProps {
 
 export function StoryScreen({ onBack }: StoryScreenProps) {
   const { state, dispatch, advanceStory } = useGame();
+  const handleContinueStory = () => {
+    const choice: Choice = {
+      id: `action-${Date.now()}`,
+      text: 'CONTINUE THE STORY, NO USER INPUT',
+      tone: 'honest',
+      icon: '>',
+    };
+
+    return advanceStory(choice);
+  };
   const currentStory = state.story;
   const currentScene = getCurrentScene(currentStory);
   const currentTurn = getCurrentTurn(currentStory);
@@ -54,9 +65,7 @@ export function StoryScreen({ onBack }: StoryScreenProps) {
   return (
     <div className="relative h-full w-full overflow-hidden bg-black">
       <StoryBackdrop
-        backgroundKey={`${currentStory.id}:${currentScene?.id ?? 'none'}`}
         imageUrl={backgroundImageUrl}
-        alt={currentScene?.description || ''}
       />
 
       <StoryHeader
@@ -88,6 +97,7 @@ export function StoryScreen({ onBack }: StoryScreenProps) {
         storyStatus={state.storyStatus}
         errorMessage={state.errorMessage}
         onAdvanceStory={advanceStory}
+        onContinueStory={handleContinueStory}
       />
 
       <AnimatePresence>

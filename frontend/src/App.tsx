@@ -19,23 +19,23 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
         <div className="phone-power-btn" />
         {/* Volume buttons */}
         <div className="phone-volume-btns" />
-        
+
         {/* Phone screen */}
         <div className="phone-screen">
           {/* Dynamic Island / Notch */}
           <div className="phone-notch">
             <div className="phone-camera" />
           </div>
-          
+
           {/* Status bar */}
           <div className="phone-status-bar">
             <span className="phone-time">9:41</span>
             <div className="phone-status-icons">
               <svg className="w-4 h-3" viewBox="0 0 24 14" fill="white">
-                <path d="M2 10h16v2H2zM2 6h12v2H2zM2 2h8v2H2z"/>
+                <path d="M2 10h16v2H2zM2 6h12v2H2zM2 2h8v2H2z" />
               </svg>
               <svg className="w-4 h-3" viewBox="0 0 24 14" fill="white">
-                <path d="M18 2a4 4 0 014 4v2a4 4 0 01-4 4V2zM12 5a4 4 0 014 4v1a4 4 0 01-4 4V5z"/>
+                <path d="M18 2a4 4 0 014 4v2a4 4 0 01-4 4V2zM12 5a4 4 0 014 4v1a4 4 0 01-4 4V5z" />
               </svg>
               <div className="phone-battery">
                 <div className="phone-battery-level" />
@@ -52,7 +52,7 @@ function PhoneFrame({ children }: { children: React.ReactNode }) {
           <div className="phone-home-indicator" />
         </div>
       </div>
-      
+
       {/* Reflection effect */}
       <div className="phone-reflection" />
     </div>
@@ -121,8 +121,8 @@ function WebPage() {
     <div className="web-page">
       {/* Header */}
       <header className="web-header">
-        <h1 className="web-title">Insta</h1>
-        <p className="web-subtitle">Snap your world. Play your story.</p>
+        <h1 className="web-title">Overworld</h1>
+        <p className="web-subtitle">The world is the largest open-world game ever made. Press start.</p>
       </header>
 
       {/* Main content - Phone mockup */}

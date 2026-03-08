@@ -1,22 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music } from 'lucide-react';
 import { useGame } from '@/context/GameContext';
 import { buildStoryTitle } from '@/lib/story';
 
 export function LoadingScreen() {
   const { state, dispatch, generateStory } = useGame();
   const [currentStage, setCurrentStage] = useState(0);
-  const [showMusicIndicator, setShowMusicIndicator] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowMusicIndicator(true);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     if (state.storyStatus === 'idle' && state.pendingImageFile) {
@@ -116,32 +106,6 @@ export function LoadingScreen() {
             'radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.5) 100%)',
         }}
       />
-
-      <AnimatePresence>
-        {showMusicIndicator ? (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute top-3 right-3 z-20"
-          >
-            <motion.div
-              animate={{
-                scale: [1, 1.1, 1],
-                opacity: [0.6, 1, 0.6],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 backdrop-blur-sm"
-            >
-              <Music className="h-2.5 w-2.5 text-white/60" />
-              <span className="text-[9px] text-white/40">Music</span>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
 
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-5">
         {state.storyStatus === 'error' ? (

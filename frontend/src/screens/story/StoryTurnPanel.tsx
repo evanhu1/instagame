@@ -15,6 +15,8 @@ import type {
   StoryStatus,
 } from '@/types/game';
 
+const CONTINUE_PENDING_LABEL = 'Continuing the story...';
+
 interface StoryTurnPanelProps {
   turnKey: string;
   turn: LiveStoryTurn;
@@ -24,6 +26,7 @@ interface StoryTurnPanelProps {
   storyStatus: StoryStatus;
   errorMessage: string | null;
   onAdvanceStory: (choice: Choice) => Promise<void>;
+  onContinueStory: () => Promise<void>;
 }
 
 interface CharacterPortraitProps {
@@ -209,6 +212,7 @@ export function StoryTurnPanel({
   storyStatus,
   errorMessage,
   onAdvanceStory,
+  onContinueStory,
 }: StoryTurnPanelProps) {
   const [actionInput, setActionInput] = useState('');
   const [submittedActionText, setSubmittedActionText] = useState<string | null>(null);
@@ -256,6 +260,15 @@ export function StoryTurnPanel({
 
     setSubmittedActionText(trimmedAction);
     void onAdvanceStory(choice);
+  }
+
+  function handleContinueStory() {
+    if (storyStatus === 'advancing') {
+      return;
+    }
+
+    setSubmittedActionText(CONTINUE_PENDING_LABEL);
+    void onContinueStory();
   }
 
   return (
@@ -335,6 +348,13 @@ export function StoryTurnPanel({
                     Send
                   </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleContinueStory}
+                  className="mt-2 flex h-10 w-full items-center justify-center rounded-lg border border-white/10 bg-white/8 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/75 transition active:scale-[0.98]"
+                >
+                  Continue
+                </button>
               </label>
             </motion.form>
           ) : null}
@@ -344,8 +364,14 @@ export function StoryTurnPanel({
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-amber-300/15 bg-black/25 px-3 py-2 text-left backdrop-blur-sm"
+            className="relative overflow-hidden rounded-xl border border-amber-300/15 bg-black/25 px-3 py-2 text-left backdrop-blur-sm"
           >
+            <motion.div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+              animate={{ x: ['-25%', '375%'] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+            />
             <div className="mt-1.5 flex items-start gap-2">
               <LoaderCircle className="mt-0.5 h-3 w-3 flex-shrink-0 animate-spin text-amber-300" />
               <p className="text-[11px] leading-relaxed text-white/85">

@@ -193,9 +193,6 @@ export function CameraScreen() {
               ) : null}
             </div>
           </div>
-          <p className="mt-1 text-center text-[9px] text-white/20">
-            The current backend ignores genre input, so this is visual-only for now.
-          </p>
         </motion.div>
 
         <motion.button
